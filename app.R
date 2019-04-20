@@ -113,7 +113,7 @@ server <- function(input, output) {
     if (is.null(inFile))
       return(NULL)
     
-    tbl <- read.csv(inFile$datapath, skip = 2, stringsAsFactors = FALSE)
+    tbl <- read.csv(inFile$datapath, skip = 2, stringsAsFactors = FALSE, header = FALSE)
     
     return(tbl)
   })
@@ -126,7 +126,7 @@ server <- function(input, output) {
     if (is.null(inFile))
       return(NULL)
     
-    tbl <- read.csv(inFile$datapath, skip = 2, stringsAsFactors = FALSE)
+    tbl <- read.csv(inFile$datapath, stringsAsFactors = FALSE, header = FALSE)
     
     return(tbl)
   })
@@ -150,7 +150,6 @@ server <- function(input, output) {
   
     df1 <- agents()[agents()[,1] == input$time,]
     df2 <- antenna()[]
-    
     p <- ggplot(data = df1[]) + geom_point(aes(x = df1[,3], y = df1[,4], color = df1[,2]))  
     p <- p + xlim(0,10) + ylim(0,10)
     p <- p + geom_point(shape = 8, size = 6, data = df2[], aes(x = df2[,2], y = df2[,3]), colour = "#CC0000")
