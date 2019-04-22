@@ -7,32 +7,10 @@
 #    http://shiny.rstudio.com/
 #
 
-library(animation)
+# library(gganimate)
 library(ggplot2)
-ani.options(outdir = getwd())
+library(gganimate)
 
-# antenna <- lapply(agent <- 1000:1010, function(x) data.frame(
-#     x = rep(runif(1, min = 9, max = 11), 100),
-#     y = rep(runif(1, min = 9, max = 11), 100),
-#     t = seq(1, 100, 1),
-#     pid = rep(x, 100),
-#     type = "A"))
-# 
-# antenna <- do.call("rbind", antenna)
-# 
-# mydata <- lapply( agent <- 1:3, function(x) data.frame(
-#   x = rep(10, 100) - runif(n = 100, -1, 1),
-#   y = rep(10, 100) - runif(n = 100, -1, 1),
-#   t = seq(1, 100, 1),
-#   pid = rep(x, 100),
-#   type = "P")
-# )
-# 
-# mydata <- do.call("rbind", mydata)
-# 
-# mydata <- rbind(mydata, antenna)
-# 
-# write.csv(mydata, "/home/heaviside/Desktop/test.csv", row.names = FALSE)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -41,7 +19,7 @@ ui <- fluidPage(
             
 # TODO height
   column(class = "myplot", width = 12, 
-      plotOutput(outputId = "particle"))
+      plotOutput(outputId = "particle", height = "600px"))
   ),
   
   fluidRow( class = "controlRow",
@@ -64,13 +42,17 @@ ui <- fluidPage(
 
     column(width = 3,
                   uiOutput("sliders")
-                  ),
+                  )
 
-    column(width = 3,
-                  downloadButton(outputId = "savegif",
-                                 label = "Save plot to gif"))
+    # column(width = 3,
+    #               downloadButton(outputId = "savegif",
+    #                              label = "Save plot to gif"))
 
           ),
+  fluidRow(
+    column(width = 3,
+           uiOutput("sel_agents")
+  )),
   
   tags$head(tags$style("
                         .plotRow{height:700px;}
@@ -79,29 +61,12 @@ ui <- fluidPage(
                        ")
             )
 )
-  # sidebarLayout(
-  #   sidebarPanel(
-  #     fileInput("file1", "Choose CSV File",
-  #               accept = c(
-  #                 "text/csv",
-  #                 "text/comma-separated-values,text/plain",
-  #                 ".csv")
-  #     ),
-  #     tags$hr(),
-  #     checkboxInput("header", "Header", TRUE),
-  #     uiOutput("sliders"),
-  #     downloadButton(outputId = "savegif", label = "Save plot to gif")
-  #   ),
-  #   mainPanel(
-  #     plotOutput("particles")
-  #   )
-  # )
 
-
+  
 # Define server logic 
 server <- function(input, output) {
   
-  # set file size limi
+  # set file size limit
   options(shiny.maxRequestSize = 100*1024^2)
   
   #################### read data from csv ########################
@@ -142,38 +107,53 @@ server <- function(input, output) {
     sliders <- sliderInput("time", "TIME:", min = min(agents()[,1]),
                             max(agents()[,1]), value = min(agents()[,1]), step = 1,
                            animate = animationOptions(interval = 500, loop = TRUE))
-    }
-  )
+    })
+  
+  output$sel_agents <- renderUI(
+    if(!is.null(agents)){
+      
+      sel_agents <- selectizeInput(inputId = "sa", label = "Select agent:", choices = c("ALL", agents()[,2]), selected = "ALL")
+    })
   
 ####################################################################
-  part_anim <- reactive({
-  
-    df1 <- agents()[agents()[,1] == input$time,]
+
+  part_anim <- function(){
+    
+    df1 <- agents()[agents()[,1] <= input$time, ]
+    
+    if(input$sa == "ALL"){
+    df1 
+    } else {
+    df1 <- df1[df1[,2] == input$sa,]  
+    }
+    
     df2 <- antenna()[]
-    p <- ggplot(data = df1[]) + geom_point(aes(x = df1[,3], y = df1[,4], color = df1[,2]))  
+    p <- ggplot(data = df1, aes(x = df1[,3], y = df1[,4])) + geom_point(aes(color = df1[,2], group = df1[,2], shape = ifelse(is.na(df1[,5]), "NoSIM", "SIM"), size = ifelse(is.na(df1[,5]), "NoSIM", "SIM"))) + scale_shape_manual(name = "", values = c(NoSIM = 4, SIM = 19)) + scale_size_manual(name = "", values = c(NoSIM = 3, SIM = 8)) 
+    p <- p + geom_path(data = df1[!is.na(df1[,5]), ], aes(x = df1[!is.na(df1[,5]), 3], y = df1[!is.na(df1[,5]), 4], color = df1[!is.na(df1[,5]), 2], group = df1[!is.na(df1[,5]), 2])) 
     p <- p + xlim(0,10) + ylim(0,10)
-    p <- p + geom_point(shape = 8, size = 6, data = df2[], aes(x = df2[,2], y = df2[,3]), colour = "#CC0000")
+    p <- p + geom_point(shape = 8, size = 6, data = df2, aes(x = df2[,2], y = df2[,3]), colour = "#CC0000")
     p <- p + xlab(label = "Longitude") + ylab("Latitude")
     p
 
- })
+ }
 
 
-  
   output$particle <- renderPlot({
-  part_anim()
-  })
-  
-  output$savegif <- downloadHandler(
-    filename = "test.gif",
-    content = function(file){
-      req(part_anim())
-      saveGIF(
-        part_anim(),
-        movie.name = "test.gif"
-      )
-    file.rename("test.gif", file)
+    req(part_anim)
+      part_anim()
     })
+  
+  #  TODO gif save
+  # output$savegif <- downloadHandler(
+  #   filename = "test.gif",
+  #   content = function(file){
+  #     req(part_anim())
+  #     saveGIF(
+  #       for(i in 1:max(input$time)){
+  #       part_anim()
+  #       }, movie.name = "test.gif", interval = 0.1) 
+  #     file.rename("test.gif", file)
+  #   })
 }
 
 # Run the application 
