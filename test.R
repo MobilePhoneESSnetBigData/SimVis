@@ -20,5 +20,8 @@ SDist <- function(dist) {
 
 Sd <- S0 - SDist(d)
 quality = 1.0 / (1 + exp(-SSteep * (Sd - Smid)))
-df <- cbind(result, d)
+df <- cbind(quality, d)
 df
+
+
+d2<-matrix(nrow = 61, ncol = 61)
