@@ -30,7 +30,8 @@ p <- p + scale_x_continuous(breaks = gridpointsx, minor_breaks=NULL)
 p <- p + guides(size=FALSE)+theme_bw()
 p <- p + geom_point(data = persons, aes(x = persons[,3], y = persons[,4]) ) 
 p <- p + transition_states(persons[,1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.005, alpha = FALSE)
-animate(p, nframes = 88, rewind = FALSE)
+options(gganimate.dev_args = list(width = 600, height = 600))
+animate(p, nframes = 400, rewind = FALSE)
 
 
 #read prob
@@ -41,21 +42,89 @@ for(i in 1:nrow(prob)) {
   prob[i, 3:ncol(prob)] <-  prob[i, 3:ncol(prob)]/s
 }
 
+#select  the mobile with Id=0
 
-min = min(prob[2,3:402])
-min = min - 0.01*min
-limits <- c(min)
-max = max(prob[2,3:402])
-
-dif = max - min
-for(i in 1:20) {
-  x <- min + i * dif/20
-  limits <- c(limits,x)
+prob<-prob[prob[,2]==0,]
+limits<-list()
+# t is time
+for(t in 1:200) {
+  min[t] = min(prob[t,3:102])
+  min[t] = min[t] - 0.01*min[t]
+  max[t] = max(prob[t,3:102])
+  limits[[t]] <- c(min[t])
+  dif[t] = max[t] - min[t]
+  for(j in 1:75) {
+    x[j] <- min[t] + j * dif[t]/75
+    limits[[t]] <- c(limits[[t]],x[j])
+  }
 }
 
-pf<-cut(as.numeric(prob[2,3:402]), limits, labels = c(1:20), right = TRUE)
-m<-matrix(pf, nrow= 20, ncol=20)
+m<-list()
+pf<-list()
+for(t in 1:200) {
+  m[[t]] <- data.frame()
+  pf[[t]]<-cut(as.numeric(prob[t,3:102]), limits[[t]], labels = c(1:75), right = TRUE)
+  for(j in 1:10) {
+    index = (j-1)*10 + 1:10
+    r <- pf[[t]][index]
+    m[[t]] <- rbind(m[[t]],r)    
+  }
+}
+
+
 m
+
+
+#### desenez probabilitatile######
+
+## 1. imi trebuie conturul fiecarei tile
+### datatile[i] contine conturul tilei i
+datatile<-list()
+x<-list()
+y<-list()
+for(i in 0:99) {
+  nr <- floor(i /  grid$No.Tiles.X)
+  nc <- floor(i - nr * grid$No.Tiles.X)
+  xs <- nc * grid$X.Tile.Dim
+  xe <- xs + grid$X.Tile.Dim
+  ys <- nr * grid$Y.Tile.Dim
+  ye <- ys + grid$Y.Tile.Dim
+  x[[i+1]]<-c(xs,xe,xe,xs)
+  y[[i+1]]<-c(ys,ys,ye,ye)
+  datatile[[i+1]]<-data.frame(x = x[[i+1]], y = y[[i+1]])
+}
+
+# t = 1
+
+p <- ggplot() + geom_polygon(aes(x = datapoly[,1], y = datapoly[,2], fill = "gray") , alpha = 0.5)
+p <- p + scale_y_continuous(breaks = gridpointsy, minor_breaks=NULL) 
+p <- p + scale_x_continuous(breaks = gridpointsx, minor_breaks=NULL)
+p <- p + guides(size=FALSE)+theme_bw()
+
+
+for(t in 75:75) {
+  #print(cat("timpul ", t))
+  for(i in 0:99) {
+    nr <- floor(i /  grid$No.Tiles.X)
+    nc <- floor(i - nr * grid$No.Tiles.X)
+    if(m[[t]][nr+1,nc+1] == 75) {
+      #print(cat(nr, " , ", nc))
+      d <- fortify(datatile[[i+1]])
+      p <- p + geom_polygon(aes_string(x = d$x, y = d$y))
+    }
+  }
+  #d <- fortify(datatile[[t]])
+  #p <- p + geom_polygon(aes_string(x = d$x, y = d$y))
+}
+
+
+
+#p <- p + geom_point(data = persons, aes(x = persons[,3], y = persons[,4]) ) 
+#p <- p + transition_states(persons[,1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.005, alpha = FALSE)
+#options(gganimate.dev_args = list(width = 600, height = 600))
+#animate(p, nframes = 400, rewind = FALSE)
+
+
 
 
 #######in lucru################
