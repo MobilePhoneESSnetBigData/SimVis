@@ -2,7 +2,7 @@ library(ggplot2)
 library(gganimate)
 library(rgeos)
 
-setwd("D:/r-projects/SimVis")
+#setwd("D:/r-projects/SimVis")
 
 #read map
 con <- file("map.wkt", open = "r")
@@ -25,7 +25,7 @@ gridpointsy = seq(from = 0, to = grid$No.Tiles.Y*grid$Y.Tile.Dim, by = grid$Y.Ti
 
 #plot persons and antennas
 p <- ggplot( datapoly, aes(x = datapoly[,1], y = datapoly[,2])) + geom_polygon(aes(fill = "gray") , alpha = 0.5)
-p <- p + geom_point(shape = 8, size = 6, data = df2, aes(x = antennas[,3], y = antennas[,4]), colour = "#CC0000")
+p <- p + geom_point(shape = 8, size = 6, data = antennas, aes(x = antennas[,3], y = antennas[,4]), colour = "#CC0000")
 p <- p + scale_y_continuous(breaks = gridpointsy, minor_breaks=NULL) 
 p <- p + scale_x_continuous(breaks = gridpointsx, minor_breaks=NULL)
 p <- p + guides(size=FALSE)+theme_bw()
