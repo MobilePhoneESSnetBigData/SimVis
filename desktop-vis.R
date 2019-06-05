@@ -46,6 +46,9 @@ for(i in 1:nrow(prob)) {
 #select  the mobile with Id=0
 prob<-prob[prob[,2]==0,]
 limits<-list()
+min <- c()
+max <- c()
+dif <- c()
 # t is time
 for(t in 1:200) {
   min[t] = min(prob[t,3:102])
