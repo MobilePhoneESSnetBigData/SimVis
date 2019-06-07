@@ -24,15 +24,19 @@ gridpointsx = seq(from = 0, to = grid$No.Tiles.X*grid$X.Tile.Dim, by = grid$X.Ti
 gridpointsy = seq(from = 0, to = grid$No.Tiles.Y*grid$Y.Tile.Dim, by = grid$Y.Tile.Dim)
 
 #plot persons and antennas
-p <- ggplot( datapoly, aes(x = datapoly[,1], y = datapoly[,2])) + geom_polygon(aes(fill = "gray") , alpha = 0.5)
+p <- ggplot() + geom_polygon(aes(x = datapoly[,1], y = datapoly[,2]), fill = "#7D7D7D" , alpha = 0.5)
 p <- p + geom_point(shape = 8, size = 6, data = antennas, aes(x = antennas[,3], y = antennas[,4]), colour = "#CC0000")
 p <- p + scale_y_continuous(breaks = gridpointsy, minor_breaks=NULL) 
 p <- p + scale_x_continuous(breaks = gridpointsx, minor_breaks=NULL)
 p <- p + guides(size=FALSE)+theme_bw()
-p <- p + geom_point(data = persons, aes(x = persons[,3], y = persons[,4]) ) 
-p <- p + transition_states(persons[,1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.005, alpha = FALSE)
+p <- p + xlab(label = "Longitude") + ylab("Latitude")
+p <- p + geom_point(data = persons, aes(x = persons [,3], y = persons[,4], shape = ifelse(is.na(persons[,5]), "NoSIM", "SIM"), size = ifelse(is.na(persons[,5]), "NoSIM", "SIM"))) + scale_shape_manual(name = "", values = c(NoSIM = 2, SIM = 4)) + scale_size_manual(name = "", values = c(NoSIM = 2, SIM = 4)) 
+p <- p + transition_states(persons[,1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
 options(gganimate.dev_args = list(width = 600, height = 600))
-animate(p, nframes = 400, rewind = FALSE)
+movie<-animate(p, renderer = av_renderer(),  nframes = 400, rewind = FALSE)
+anim_save(filename = "simulation1.mp4", animation = movie)
+
+
 
 
 #read prob file
@@ -80,12 +84,11 @@ for(i in 1:200) {
   m[[i]][is.na(m[[i]])]<-0
 }
 
-
-
 #### desenez probabilitatile######
 
 ## 1. imi trebuie conturul fiecarei tile
 ### datatile[i] contine conturul tilei i
+
 datatile<-list()
 x<-list()
 y<-list()
@@ -101,37 +104,11 @@ for(i in 0:99) {
   datatile[[i+1]]<-data.frame(x = x[[i+1]], y = y[[i+1]])
 }
 
-# t = 1
 
-p <- ggplot() + geom_polygon(aes(x = datapoly[,1], y = datapoly[,2]), fill = "#7D7D7D" , alpha = 0.5)
-p <- p + geom_point(shape = 8, size = 6, data = antennas, aes(x = antennas[,3], y = antennas[,4]), colour = "#CC0000")
-p <- p + scale_y_continuous(breaks = gridpointsy, minor_breaks=NULL) 
-p <- p + scale_x_continuous(breaks = gridpointsx, minor_breaks=NULL)
-p <- p + guides(size=FALSE)+theme_bw()
-
+#Selectez persoanele cu telefoane mobile
 persons<-persons[( persons[,2]==2),]
 
-for(t in 1:200) {
-  r <- p
-  for(i in 0:99) {
-    nr <- floor(i /  grid$No.Tiles.X)
-    nc <- floor(i - nr * grid$No.Tiles.X)
-    if(m[[t]][nr+1,nc+1] == NLevels) {
-      d <- fortify(datatile[[i+1]])
-      r <- r + geom_polygon(aes_string(x = d$x, y = d$y), alpha = 0.7)
-      r <- r + geom_point(data = persons[persons[,1] == t,], aes_string(x = persons[persons[,1] == t,][1,3], y = persons[persons[,1] == t,][1,4]) ) 
-      
-    }
-    
-  }
-  print(t)
-  print(r)
-  Sys.sleep(0.1)
-}
-
-persons<-persons[( persons[,2]==2),]
-
-ploturi_pers<-data.frame(t = NULL, x = NULL, y = NULL)
+ploturi_pers<-data.frame(t = numeric(), x = numeric(), y = numeric())
 
 for(t in 1:200) {
   ploturi_pers[t,1] <- t
@@ -139,47 +116,55 @@ for(t in 1:200) {
   ploturi_pers[t, 3] <- persons[persons[,1] == t-1,][1,4]
 }
 
-ploturi_poligoane<-data.frame(t = c(), x = c(), y = c())
+ploturi_poligoane<-data.frame(t = numeric(), x = numeric(), y = numeric())
 for(t in 1:200) {
-  tmp <-data.frame(t = c(), x = c(), y = c())
+  poligons <-list()
   for(i in 0:99) {
     nr <- floor(i /  grid$No.Tiles.X)
     nc <- floor(i - nr * grid$No.Tiles.X)
     if(m[[t]][nr+1,nc+1] == NLevels) {
       d <- fortify(datatile[[i+1]])
-      row1 <- c(t, d$x[1], d$y[1])
-      row2 <- c(t, d$x[2], d$y[2])
-      row3 <- c(t, d$x[3], d$y[3])
-      row4 <- c(t, d$x[4], d$y[4])
-      tmp <-rbind(tmp, row1)
-      tmp <-rbind(tmp, row2)
-      tmp <-rbind(tmp, row3)
-      tmp <-rbind(tmp, row4)
+      polstr <- "POLYGON(("
+      polstr<-paste(polstr, d$x[1], " ", d$y[1], ",")
+      polstr<-paste(polstr, d$x[2], " ", d$y[2], ",")
+      polstr<-paste(polstr, d$x[3], " ", d$y[3], ",")
+      polstr<-paste(polstr, d$x[4], " ", d$y[4], ",")
+      polstr<-paste(polstr, d$x[1], " ", d$y[1], "))")
+      sppol<-readWKT(polstr)
+      poligons<-c(poligons, sppol)
+
     }
   }
-  #cpoints<-chull(tmp[,2:3])
-  #cpoints<-c(cpoints, cpoints[1])
-  colnames(tmp)<-c("t", "x", "y")
+  uniune<-poligons[[1]]
+  for(j in 2:length(poligons)) {
+    uniune<-gUnion(uniune, poligons[[j]])
+  }
+
+  tmp <-data.frame(t=numeric(), x=numeric(), y=numeric())
+
+  for(j in 1:nrow(uniune@polygons[[1]]@Polygons[[1]]@coords)) {
+      tmp<-rbind(tmp, c(t, uniune@polygons[[1]]@Polygons[[1]]@coords[j,1], uniune@polygons[[1]]@Polygons[[1]]@coords[j,2]))
+      colnames(tmp)<-c("t", "x", "y")
+  }
   ploturi_poligoane <- rbind(ploturi_poligoane, tmp)
 }
 
+df<-merge(ploturi_pers, ploturi_poligoane, by.x = "t", by.y = "t")
 
+remove(p)
 p <- ggplot() + geom_polygon(aes(x = datapoly[,1], y = datapoly[,2]), fill = "#7D7D7D" , alpha = 0.5)
 p <- p + geom_point(shape = 8, size = 6, data = antennas, aes(x = antennas[,3], y = antennas[,4]), colour = "#CC0000")
 p <- p + scale_y_continuous(breaks = gridpointsy, minor_breaks=NULL) 
 p <- p + scale_x_continuous(breaks = gridpointsx, minor_breaks=NULL)
-p <- p + guides(size=FALSE)+theme_bw()
-
-p <- p + geom_point(data = ploturi_pers, aes(x = ploturi_pers[,2], y = ploturi_pers[,3]) ) 
-p <- p + geom_path(data = ploturi_poligoane, aes(x = ploturi_poligoane[,2], y = ploturi_poligoane[,3]), alpha = 0.5)
-
-p <- p + transition_states(ploturi_poligoane[,1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.005)
-#p <- p + transition_states(ploturi_pers[,1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.005, alpha = FALSE)
-
+p <- p + guides(size=FALSE) + theme_bw()
+p <- p + xlab(label = "Longitude") + ylab("Latitude")
+p <- p + geom_point(data = df, aes(x = df[,2], y = df[,3]), size = 4, shape = 4)
+p <- p + geom_polygon(data = df, aes(x = df[,4], y = df[,5]), alpha = 0.05)
+p <- p + transition_states(df[,1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
 
 options(gganimate.dev_args = list(width = 400, height = 400))
-animate(p, nframes = 400, rewind = FALSE)
-
+movie2<-animate(p, nframes = 400, renderer = av_renderer(), rewind = FALSE)
+anim_save(filename = "simulation2.mp4", animation = last_animation())
 
 
 #######in lucru################
