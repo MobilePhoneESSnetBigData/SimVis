@@ -135,17 +135,20 @@ for(t in 1:200) {
 
     }
   }
+  
   uniune<-poligons[[1]]
-  for(j in 2:length(poligons)) {
-    uniune<-gUnion(uniune, poligons[[j]])
+  if(length(poligons)>1) {
+    for(j in 2:length(poligons)) {
+      uniune<-gUnion(uniune, poligons[[j]])
+    }
   }
-
   tmp <-data.frame(t=numeric(), x=numeric(), y=numeric())
 
   for(j in 1:nrow(uniune@polygons[[1]]@Polygons[[1]]@coords)) {
       tmp<-rbind(tmp, c(t, uniune@polygons[[1]]@Polygons[[1]]@coords[j,1], uniune@polygons[[1]]@Polygons[[1]]@coords[j,2]))
       colnames(tmp)<-c("t", "x", "y")
   }
+  
   ploturi_poligoane <- rbind(ploturi_poligoane, tmp)
 }
 
