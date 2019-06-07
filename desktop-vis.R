@@ -2,7 +2,7 @@ library(ggplot2)
 library(gganimate)
 library(rgeos)
 
-setwd("D:/r-projects/SimVis")
+#setwd("D:/r-projects/SimVis")
 
 #read map
 con <- file("map.wkt", open = "r")
@@ -165,9 +165,9 @@ p <- p + geom_point(data = df, aes(x = df[,2], y = df[,3]), size = 4, shape = 4)
 p <- p + geom_polygon(data = df, aes(x = df[,4], y = df[,5]), alpha = 0.05)
 p <- p + transition_states(df[,1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
 
-options(gganimate.dev_args = list(width = 400, height = 400))
-movie2<-animate(p, nframes = 400, renderer = av_renderer(), rewind = FALSE)
-anim_save(filename = "simulation2.mp4", animation = last_animation())
+options(gganimate.dev_args = list(width = 600, height = 600))
+movie2<-animate(p, nframes = 400, renderer = ffmpeg_renderer(), rewind = FALSE, duration = 40)
+anim_save(filename = "simulation2.mpeg", animation = last_animation())
 
 
 #######in lucru################
