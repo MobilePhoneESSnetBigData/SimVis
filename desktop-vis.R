@@ -1,6 +1,7 @@
 library(ggplot2)
 library(gganimate)
 library(rgeos)
+library(png)
 
 #setwd("D:/r-projects/SimVis")
 
@@ -11,22 +12,21 @@ map <- readWKT(lines)
 datapoly = map@polygons[[1]]@Polygons[[1]]@coords
 datapoly <- as.data.frame(datapoly)
 
+#read antenna symbol
+antenna_img <-  readPNG("antenna.png")
 
 #read persons
-persons <-
-    read.csv("persons.csv",
+persons <- read.csv("persons.csv",
              stringsAsFactors = FALSE,
              header = FALSE)
 
 #read antennas
-antennas <-
-    read.csv("antennas.csv",
+antennas <- read.csv("antennas.csv",
              stringsAsFactors = FALSE,
              header = FALSE)
 
 #read grid
-grid <-
-    read.csv(file = "grid.csv",
+grid <- read.csv(file = "grid.csv",
              stringsAsFactors = FALSE,
              header = TRUE)
 gridpointsx = seq(
@@ -41,24 +41,22 @@ gridpointsy = seq(
 )
 
 #plot persons and antennas
-p <-
-    ggplot() + geom_polygon(aes(x = datapoly[, 1], y = datapoly[, 2]),
+p <- ggplot() + geom_polygon(aes(x = datapoly[, 1], y = datapoly[, 2]),
                             fill = "#7D7D7D" ,
                             alpha = 0.5)
-p <-
-    p + geom_point(
+p <- p + geom_point(
         shape = 8,
         size = 6,
         data = antennas,
         aes(x = antennas[, 3], y = antennas[, 4]),
-        colour = "#CC0000"
-    )
-p <-
-    p + scale_y_continuous(breaks = gridpointsy, minor_breaks = NULL)
-p <-
-    p + scale_x_continuous(breaks = gridpointsx, minor_breaks = NULL)
+        colour = "#CC0000") + annotation_raster(antenna_img, ymin = antennas[, 4]),ymax= antennas[, 4])+10,xmin = antennas[, 3],xmax = antennas[, 3]+10)
+p <- p + scale_y_continuous(breaks = gridpointsy, minor_breaks = NULL)
+p <- p + scale_x_continuous(breaks = gridpointsx, minor_breaks = NULL)
 p <- p + guides(size = FALSE) + theme_bw()
 p <- p + xlab(label = "Longitude") + ylab("Latitude")
+# for ( i in 1:nrow(antennas)) {
+#     p <- p + annotation_raster(antenna_img, ymin = antennas[i, 4],ymax = antennas[i, 4]+500,xmin = antennas[i, 3],xmax = antennas[i, 3]+500) +geom_point()
+# }
 p <-
     p + geom_point(data = persons,
                    aes(
@@ -67,16 +65,15 @@ p <-
                        shape = ifelse(is.na(persons[, 5]), "NoSIM", "SIM"),
                        size = ifelse(is.na(persons[, 5]), "NoSIM", "SIM")
                    )) + scale_shape_manual(name = "", values = c(NoSIM = 2, SIM = 4)) + scale_size_manual(name = "", values = c(NoSIM = 2, SIM = 4))
-p <-
-    p + transition_states(persons[, 1],
+p <- p + transition_states(persons[, 1],
                           transition_length = 1,
                           state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
 options(gganimate.dev_args = list(width = 600, height = 600))
-movie <-
-    animate(p,
+movie <- animate(p,
             renderer = av_renderer(),
             nframes = 400,
             rewind = FALSE)
+
 anim_save(filename = "simulation1.mp4", animation = movie)
 
 
@@ -94,7 +91,7 @@ for (i in 1:nrow(prob)) {
 }
 
 #select  the mobile with Id=0
-prob <- prob[prob[, 2] == 0,]
+prob <- prob[prob[, 2] == 0, ]
 limits <- list()
 min <- c()
 max <- c()
@@ -156,15 +153,15 @@ for (i in 0:99) {
 
 
 #Selectez persoanele cu telefoane mobile
-persons <- persons[(persons[, 2] == 2),]
+persons <- persons[(persons[, 2] == 2), ]
 
 ploturi_pers <-
     data.frame(t = numeric(), x = numeric(), y = numeric())
 
 for (t in 1:200) {
     ploturi_pers[t, 1] <- t
-    ploturi_pers[t, 2] <- persons[persons[, 1] == t - 1,][1, 3]
-    ploturi_pers[t, 3] <- persons[persons[, 1] == t - 1,][1, 4]
+    ploturi_pers[t, 2] <- persons[persons[, 1] == t - 1, ][1, 3]
+    ploturi_pers[t, 3] <- persons[persons[, 1] == t - 1, ][1, 4]
 }
 
 ploturi_poligoane <-
@@ -184,7 +181,7 @@ for (t in 1:200) {
             polstr <- paste(polstr, d$x[1], " ", d$y[1], "))")
             sppol <- readWKT(polstr)
             poligons <- c(poligons, sppol)
-            
+
         }
     }
     uniune <- poligons[[1]]
@@ -194,7 +191,7 @@ for (t in 1:200) {
         }
     }
     tmp <- data.frame(t = numeric(), x = numeric(), y = numeric())
-    
+
     for (j in 1:nrow(uniune@polygons[[1]]@Polygons[[1]]@coords)) {
         tmp <-
             rbind(
@@ -216,35 +213,40 @@ df <- merge(ploturi_pers,
             by.y = "t")
 
 remove(p)
-p <- ggplot() + geom_polygon(aes(x = datapoly[, 1], y = datapoly[, 2]),
+p <-
+    ggplot() + geom_polygon(aes(x = datapoly[, 1], y = datapoly[, 2]),
                             fill = "#7D7D7D" ,
                             alpha = 0.5)
 p <- p + geom_point(
-        shape = 8,
-        size = 6,
-        data = antennas,
-        aes(x = antennas[, 3], y = antennas[, 4]),
-        colour = "#CC0000"
-    )
-p <- p + scale_y_continuous(breaks = gridpointsy, minor_breaks = NULL)
-p <- p + scale_x_continuous(breaks = gridpointsx, minor_breaks = NULL)
+    shape = 8,
+    size = 6,
+    data = antennas,
+    aes(x = antennas[, 3], y = antennas[, 4]),
+    colour = "#CC0000"
+)
+p <-
+    p + scale_y_continuous(breaks = gridpointsy, minor_breaks = NULL)
+p <-
+    p + scale_x_continuous(breaks = gridpointsx, minor_breaks = NULL)
 p <- p + guides(size = FALSE) + theme_bw()
 p <- p + xlab(label = "Longitude") + ylab("Latitude")
 p <- p + geom_point(data = df,
-                   aes(x = df[, 2], y = df[, 3]),
-                   size = 4,
-                   shape = 4)
-p <- p + geom_polygon(data = df, aes(x = df[, 4], y = df[, 5]), alpha = 0.05)
-p <- p + transition_states(df[, 1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
+                    aes(x = df[, 2], y = df[, 3]),
+                    size = 4,
+                    shape = 4)
+p <-
+    p + geom_polygon(data = df, aes(x = df[, 4], y = df[, 5]), alpha = 0.05)
+p <-
+    p + transition_states(df[, 1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
 
 options(gganimate.dev_args = list(width = 600, height = 600))
 movie2 <- animate(
-        p,
-        nframes = 400,
-        renderer = ffmpeg_renderer(),
-        rewind = FALSE,
-        duration = 40
-    )
+    p,
+    nframes = 400,
+    renderer = ffmpeg_renderer(),
+    rewind = FALSE,
+    duration = 40
+)
 anim_save(filename = "simulation2.mpeg", animation = last_animation())
 
 
