@@ -13,7 +13,7 @@ datapoly = map@polygons[[1]]@Polygons[[1]]@coords
 datapoly <- as.data.frame(datapoly)
 
 #read antenna symbol
-antenna_img <-  readPNG("antenna.png")
+antenna_img <-  readPNG("antenna3.png")
 
 #read persons
 persons <- read.csv("persons.csv",
@@ -44,19 +44,17 @@ gridpointsy = seq(
 p <- ggplot() + geom_polygon(aes(x = datapoly[, 1], y = datapoly[, 2]),
                             fill = "#7D7D7D" ,
                             alpha = 0.5)
-p <- p + geom_point(
-        shape = 8,
-        size = 6,
-        data = antennas,
-        aes(x = antennas[, 3], y = antennas[, 4]),
-        colour = "#CC0000")
+# p <- p + geom_point(
+#         shape = 8,
+#         size = 6,
+#         data = antennas,
+#         aes(x = antennas[, 3], y = antennas[, 4]),
+#         colour = "#CC0000")
 p <- p + scale_y_continuous(breaks = gridpointsy, minor_breaks = NULL)
 p <- p + scale_x_continuous(breaks = gridpointsx, minor_breaks = NULL)
 p <- p + guides(size = FALSE) + theme_bw()
 p <- p + xlab(label = "Longitude") + ylab("Latitude")
-# for ( i in 1:nrow(antennas)) {
-#     p <- p + annotation_raster(antenna_img, ymin = antennas[i, 4],ymax = antennas[i, 4]+500,xmin = antennas[i, 3],xmax = antennas[i, 3]+500) +geom_point()
-# }
+
 p <-
     p + geom_point(data = persons,
                    aes(
@@ -68,11 +66,22 @@ p <-
 p <- p + transition_states(persons[, 1],
                           transition_length = 1,
                           state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
+
+#for ( i in 1:nrow(antennas)) {
+#    p <- p + annotation_raster(antenna_img, ymin = antennas[, 4]-250,ymax = antennas[, 4]+250,xmin = antennas[, 3]-150,xmax = antennas[, 3]+150) +geom_point()
+#}
+ p <-  p +   mapply(function(xx, yy)
+        annotation_raster(antenna_img, xmin=xx-200, xmax=xx+200, ymin=yy-200, ymax=yy+200),
+        xx<-antennas[, 3],yy<-antennas[, 4] )
+#    geom_point(aes(dime3_channel, day, size=Conv,alpha=Conv,image=(annotation_raster(pic1,xmin=0,ymin=0,xmax=5,ymax=5)),color="firebrick")) +
+
+
 options(gganimate.dev_args = list(width = 600, height = 600))
 movie <- animate(p,
             renderer = ffmpeg_renderer(),
             nframes = 400,
-            rewind = FALSE)
+            rewind = FALSE,
+            duration = 40)
 
 anim_save(filename = "simulation1.mpeg", animation = movie)
 
