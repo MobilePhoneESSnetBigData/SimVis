@@ -49,7 +49,7 @@ p <- p + geom_point(
         size = 6,
         data = antennas,
         aes(x = antennas[, 3], y = antennas[, 4]),
-        colour = "#CC0000") + annotation_raster(antenna_img, ymin = antennas[, 4]),ymax= antennas[, 4])+10,xmin = antennas[, 3],xmax = antennas[, 3]+10)
+        colour = "#CC0000")
 p <- p + scale_y_continuous(breaks = gridpointsy, minor_breaks = NULL)
 p <- p + scale_x_continuous(breaks = gridpointsx, minor_breaks = NULL)
 p <- p + guides(size = FALSE) + theme_bw()
@@ -70,11 +70,11 @@ p <- p + transition_states(persons[, 1],
                           state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
 options(gganimate.dev_args = list(width = 600, height = 600))
 movie <- animate(p,
-            renderer = av_renderer(),
+            renderer = ffmpeg_renderer(),
             nframes = 400,
             rewind = FALSE)
 
-anim_save(filename = "simulation1.mp4", animation = movie)
+anim_save(filename = "simulation1.mpeg", animation = movie)
 
 
 
