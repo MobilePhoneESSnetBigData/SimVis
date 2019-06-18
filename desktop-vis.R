@@ -42,7 +42,7 @@ p <- p + transition_states(persons[, 1], transition_length = 1, state_length = 1
 options(gganimate.dev_args = list(width = 600, height = 600))
 movie <- animate(p, renderer = ffmpeg_renderer(), nframes = 400, rewind = FALSE, duration = 40)
 
-anim_save(filename = "simulation.mpg", animation = movie)
+anim_save(filename = "simulation-19iunie.mpg", animation = movie)
 
 
 
@@ -63,12 +63,12 @@ m <- list()
 pf <- list()
 for (t in 1:200) {
   m[[t]] <- data.frame()
-  
+
   if(sum(prob[t, 3:102]) > 0)
     pf[[t]] <- cut(as.numeric(prob[t, 3:102]), breaks = NLevels,labels = c(1:NLevels),right = TRUE, include.lowest = TRUE)
   else
     pf[[t]] <- rep(1, 100)
-  
+
   for (j in 1:10) {
     index = (j - 1) * 10 + 1:10
     r <- pf[[t]][index]
@@ -137,7 +137,7 @@ for (t in 1:200) {
     }
   }
   tmp <- data.frame(t = numeric(), x = numeric(), y = numeric())
-  
+
   for (j in 1:nrow(uniune@polygons[[1]]@Polygons[[1]]@coords)) {
     tmp <- rbind(tmp, c(t,uniune@polygons[[1]]@Polygons[[1]]@coords[j, 1], uniune@polygons[[1]]@Polygons[[1]]@coords[j, 2]))
     colnames(tmp) <- c("t", "x", "y")
@@ -160,7 +160,7 @@ p <- p + transition_states(df[, 1], transition_length = 1, state_length = 1) + s
 
 options(gganimate.dev_args = list(width = 600, height = 600))
 movie2 <- animate( p, nframes = 400, renderer = ffmpeg_renderer(), rewind = FALSE, duration = 40)
-anim_save(filename = "simulation-uniform-prior.mpg", animation = movie2)
+anim_save(filename = "simulation-network-prior-19iunie.mpg", animation = movie2)
 
 
 #######in lucru################
