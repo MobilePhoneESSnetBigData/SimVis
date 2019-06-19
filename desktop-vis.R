@@ -57,13 +57,14 @@ for (i in 1:nrow(prob)) {
 
 #select  the mobile with Id=0
 prob <- prob[prob[, 2] == 0, ]
+TMAX <- max(prob[,1]) + 1 #t starts from 0 in prob.csv
 NLevels <- 75
 m <- list()
 pf <- list()
-for (t in 1:200) {
+for (t in 1:TMAX) {
   m[[t]] <- data.frame()
 
-    ncols <- 3:((3+grid$No.Tiles.X*grid$No.Tiles.Y)-1)
+    ncols <- 3:((3+grid$No.Tiles.X*grid$No.Tiles.Y) - 1)
   if(sum(prob[t, ncols]) > 0)
     pf[[t]] <- cut(as.numeric(prob[t, ncols]), breaks = NLevels,labels = c(1:NLevels),right = TRUE, include.lowest = TRUE)
   else
@@ -77,7 +78,7 @@ for (t in 1:200) {
   }
 }
 
-for (i in 1:200) {
+for (i in 1:TMAX) {
   m[[i]][is.na(m[[i]])] <- 0
 }
 
@@ -89,7 +90,8 @@ for (i in 1:200) {
 datatile <- list()
 x <- list()
 y <- list()
-for (i in 0:99) {
+noTiles <- grid$No.Tiles.X * grid$No.Tiles.Y
+for (i in 0:(noTiles - 1) {
   nr <- floor(i /  grid$No.Tiles.X)
   nc <- floor(i - nr * grid$No.Tiles.X)
   xs <- nc * grid$X.Tile.Dim
@@ -106,16 +108,16 @@ persons <- persons[(persons[, 2] == 2), ]
 
 ploturi_pers <- data.frame(t = numeric(), x = numeric(), y = numeric())
 
-for (t in 1:200) {
+for (t in 1:TMAX) {
   ploturi_pers[t, 1] <- t
   ploturi_pers[t, 2] <- persons[persons[, 1] == t - 1, ][1, 3]
   ploturi_pers[t, 3] <- persons[persons[, 1] == t - 1, ][1, 4]
 }
 
 ploturi_poligoane <- data.frame(t = numeric(), x = numeric(), y = numeric())
-for (t in 1:200) {
+for (t in 1:TMAX) {
   poligons <- list()
-  for (i in 0:99) {
+  for (i in 0:(noTiles-1)) {
     nr <- floor(i /  grid$No.Tiles.X)
     nc <- floor(i - nr * grid$No.Tiles.X)
     if (m[[t]][nr + 1, nc + 1] == NLevels) {
