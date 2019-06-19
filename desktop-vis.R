@@ -42,9 +42,8 @@ p <- p + transition_states(persons[, 1], transition_length = 1, state_length = 1
 options(gganimate.dev_args = list(width = 600, height = 600))
 movie <- animate(p, renderer = ffmpeg_renderer(), nframes = 400, rewind = FALSE, duration = 40)
 
-anim_save(filename = "simulation-new.mpg", animation = movie)
 
-
+anim_save(filename = "simulation-19iunie.mpg", animation = movie)
 
 
 #read prob file
@@ -63,11 +62,13 @@ m <- list()
 pf <- list()
 for (t in 1:200) {
   m[[t]] <- data.frame()
+
     ncols <- 3:((3+grid$No.Tiles.X*grid$No.Tiles.Y)-1)
   if(sum(prob[t, ncols]) > 0)
     pf[[t]] <- cut(as.numeric(prob[t, ncols]), breaks = NLevels,labels = c(1:NLevels),right = TRUE, include.lowest = TRUE)
   else
     pf[[t]] <- rep(1, grid$No.Tiles.X*grid$No.Tiles.Y)
+
 
   for (j in 1:10) {
     index = (j - 1) * 10 + 1:10
@@ -99,7 +100,6 @@ for (i in 0:99) {
   y[[i + 1]] <- c(ys, ys, ye, ye)
   datatile[[i + 1]] <- data.frame(x = x[[i + 1]], y = y[[i + 1]])
 }
-
 
 #Selectez persoanele cu telefoane mobile
 persons <- persons[(persons[, 2] == 2), ]
@@ -160,7 +160,9 @@ p <- p + transition_states(df[, 1], transition_length = 1, state_length = 1) + s
 
 options(gganimate.dev_args = list(width = 600, height = 600))
 movie2 <- animate( p, nframes = 400, renderer = ffmpeg_renderer(), rewind = FALSE, duration = 40)
-anim_save(filename = "simulation-network-prior-new1.mpg", animation = movie2)
+
+anim_save(filename = "simulation-network-prior-19iunie.mpg", animation = movie2)
+
 
 
 #######in lucru################
