@@ -43,7 +43,7 @@ options(gganimate.dev_args = list(width = 600, height = 600))
 movie <- animate(p, renderer = ffmpeg_renderer(), nframes = 400, rewind = FALSE, duration = 40)
 
 
-anim_save(filename = "simulation-19iunie.mpg", animation = movie)
+anim_save(filename = "simulation-20iunie.mpg", animation = movie)
 
 
 #read prob file
@@ -56,7 +56,7 @@ for (i in 1:nrow(prob)) {
 }
 
 #select  the mobile with Id=0
-prob <- prob[prob[, 2] == 0, ]
+prob <- prob[prob[, 2] == 1, ]
 TMAX <- max(prob[,1]) + 1 #t starts from 0 in prob.csv
 NLevels <- 75
 m <- list()
@@ -71,8 +71,8 @@ for (t in 1:TMAX) {
     pf[[t]] <- rep(1, grid$No.Tiles.X*grid$No.Tiles.Y)
 
 
-  for (j in 1:10) {
-    index = (j - 1) * 10 + 1:10
+  for (j in 1:20) {
+    index = (j - 1) * 20 + 1:20
     r <- pf[[t]][index]
     m[[t]] <- rbind(m[[t]], r)
   }
@@ -91,7 +91,7 @@ datatile <- list()
 x <- list()
 y <- list()
 noTiles <- grid$No.Tiles.X * grid$No.Tiles.Y
-for (i in 0:(noTiles - 1) {
+for (i in 0:(noTiles - 1) ){
   nr <- floor(i /  grid$No.Tiles.X)
   nc <- floor(i - nr * grid$No.Tiles.X)
   xs <- nc * grid$X.Tile.Dim
@@ -104,7 +104,7 @@ for (i in 0:(noTiles - 1) {
 }
 
 #Selectez persoanele cu telefoane mobile
-persons <- persons[(persons[, 2] == 2), ]
+persons <- persons[(persons[, 2] == 3), ]
 
 ploturi_pers <- data.frame(t = numeric(), x = numeric(), y = numeric())
 
@@ -120,7 +120,7 @@ for (t in 1:TMAX) {
   for (i in 0:(noTiles-1)) {
     nr <- floor(i /  grid$No.Tiles.X)
     nc <- floor(i - nr * grid$No.Tiles.X)
-    if (m[[t]][nr + 1, nc + 1] == NLevels) {
+    if (m[[t]][nr + 1, nc + 1] >= NLevels-2) {
       d <- fortify(datatile[[i + 1]])
       polstr <- "POLYGON(("
       polstr <- paste(polstr, d$x[1], " ", d$y[1], ",")
@@ -163,7 +163,7 @@ p <- p + transition_states(df[, 1], transition_length = 1, state_length = 1) + s
 options(gganimate.dev_args = list(width = 600, height = 600))
 movie2 <- animate( p, nframes = 400, renderer = ffmpeg_renderer(), rewind = FALSE, duration = 40)
 
-anim_save(filename = "simulation-network-prior-19iunie.mpg", animation = movie2)
+anim_save(filename = "simulation-network-prior-20iunie.mpg", animation = movie2)
 
 
 
@@ -178,3 +178,12 @@ Sd = 10 * gamma * log10(distance)
 S = S0 - Sd
 result = 1.0 / (1 + exp(-ssteep * (S - smid)))
 
+
+nrow(omuletz)
+i<-1:183
+omuletz<-cbind(i,omuletz)
+
+p<-ggplot() + geom_path(aes(x = points$V1, y = points$V2))
+p <- p + geom_point(data = omuletz,aes(x = omuletz [, 2], y = omuletz[, 3]))
+p <- p + transition_states(omuletz[, 1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
+p
