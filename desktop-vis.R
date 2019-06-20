@@ -70,9 +70,9 @@ for (t in 1:TMAX) {
   else
     pf[[t]] <- rep(1, grid$No.Tiles.X*grid$No.Tiles.Y)
 
-
-  for (j in 1:20) {
-    index = (j - 1) * 20 + 1:20
+####aici corectez
+  for (j in 1:grid$No.Tiles.Y) {
+    index = (j - 1) * grid$No.Tiles.X + 1:grid$No.Tiles.Y
     r <- pf[[t]][index]
     m[[t]] <- rbind(m[[t]], r)
   }
