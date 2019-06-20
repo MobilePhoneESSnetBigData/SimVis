@@ -179,11 +179,14 @@ S = S0 - Sd
 result = 1.0 / (1 + exp(-ssteep * (S - smid)))
 
 
-nrow(omuletz)
-i<-1:183
-omuletz<-cbind(i,omuletz)
+street1 <- read.csv("street1.csv",stringsAsFactors = FALSE, header = FALSE)
+street2 <- read.csv("street2.csv",stringsAsFactors = FALSE, header = FALSE)
+person_move <- read.csv("person_move.csv",stringsAsFactors = FALSE, header = FALSE)
 
-p<-ggplot() + geom_path(aes(x = points$V1, y = points$V2))
-p <- p + geom_point(data = omuletz,aes(x = omuletz [, 2], y = omuletz[, 3]))
-p <- p + transition_states(omuletz[, 1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
-p
+p<-ggplot() + geom_path(aes(x = street1$V1, y = street1$V2))
+p <- p + geom_path(aes(x = street2$V1, y = street2$V2))
+p <- p + geom_point(data = person_move,aes(x = person_move[, 2], y = person_move[, 3]))
+p <- p + transition_states(person_move[, 1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
+options(gganimate.dev_args = list(width = 600, height = 600))
+movie2 <- animate( p, nframes = 700, renderer = ffmpeg_renderer(), rewind = FALSE, duration = 40)
+
