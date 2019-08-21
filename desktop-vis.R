@@ -6,21 +6,26 @@ library(png)
 setwd("D:/r-projects/SimVis")
 
 #read map
-con <- file("map.wkt", open = "r")
+con <- file("mapMadrid.wkt", open = "r")
 lines <- readLines(con)
+
 map <- readWKT(lines)
-datapoly = map@polygons[[1]]@Polygons[[1]]@coords
-datapoly <- as.data.frame(datapoly)
+#homeLocation <-readWKT(lines[2])
+datapolyBoundary = map@polygons[[1]]@Polygons[[1]]@coords
+datapolyBoundary <- as.data.frame(datapolyBoundary)
+
+#datapolyHome = homeLocation@polygons[[1]]@Polygons[[1]]@coords
+#datapolyHome <- as.data.frame(datapolyHome)
 
 #read antenna symbol
 antenna_img <-  readPNG("omnidirectional-antenna-tiny.png")
 
 #read persons
-persons <- read.csv("persons.csv", stringsAsFactors = FALSE, header = FALSE)
+persons <- read.csv("persons.csv", stringsAsFactors = FALSE, header = TRUE)
 
 #read antennas
 
-antennas <- read.csv("antennas.csv",stringsAsFactors = FALSE, header = FALSE)
+antennas <- read.csv("antennas.csv",stringsAsFactors = FALSE, header = TRUE)
 
 #read grid
 grid <- read.csv(file = "grid.csv", stringsAsFactors = FALSE, header = TRUE)
@@ -28,14 +33,16 @@ gridpointsx = seq(from = 0, to = grid$No.Tiles.X * grid$X.Tile.Dim, by = grid$X.
 gridpointsy = seq(from = 0, to = grid$No.Tiles.Y * grid$Y.Tile.Dim, by = grid$Y.Tile.Dim)
 
 #plot persons and antennas
-p <- ggplot() + geom_polygon(aes(x = datapoly[, 1], y = datapoly[, 2]), fill = "#7D7D7D", alpha = 0.5)
-p <- p + mapply(function(xx, yy) annotation_raster(antenna_img, xmin = xx - 200, xmax = xx + 200, ymin = yy - 200, ymax = yy + 200),xx <- antennas[, 3] ,yy <- antennas[, 4] )
+p <- ggplot() + geom_polygon(aes(x = datapolyBoundary[, 1], y = datapolyBoundary[, 2]), fill = "#000000", alpha = 0.25)
+p <- p + theme(plot.background = element_rect(colour = 'purple', fill = 'pink', size = 3, linetype='dashed'))
+#p <- p + geom_polygon(aes(x = datapolyHome[, 1], y = datapolyHome[, 2]), fill = "#7D7D7D", alpha = 0.5)
+p <- p + mapply(function(xx, yy) annotation_raster(antenna_img, xmin = xx - 50, xmax = xx + 50, ymin = yy - 50, ymax = yy + 50),xx <- antennas[, 3] ,yy <- antennas[, 4] )
 
 p <- p + scale_y_continuous(breaks = gridpointsy, minor_breaks = NULL)
 p <- p + scale_x_continuous(breaks = gridpointsx, minor_breaks = NULL)
 p <- p + guides(size = FALSE) + theme_bw()
 p <- p + xlab(label = "Longitude") + ylab("Latitude")
-p <- p + geom_point(data = persons,aes(x = persons [, 3], y = persons[, 4], shape = ifelse(is.na(persons[, 5]), "NoSIM", "SIM"), size = ifelse(is.na(persons[, 5]), "NoSIM", "SIM") )) + scale_shape_manual(name = "", values = c(NoSIM = 2, SIM = 4)) + scale_size_manual(name = "", values = c(NoSIM = 2, SIM = 4))
+p <- p + geom_point(data = persons,aes(x = persons [, 3], y = persons[, 4], shape = ifelse(is.na(persons[, 6]), "NoSIM", "SIM"), size = ifelse(is.na(persons[, 6]), "NoSIM", "SIM") )) + scale_shape_manual(name = "", values = c(NoSIM = 2, SIM = 4)) + scale_size_manual(name = "", values = c(NoSIM = 2, SIM = 4))
 p <- p + transition_states(persons[, 1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
 
 
@@ -43,7 +50,7 @@ options(gganimate.dev_args = list(width = 600, height = 600))
 movie <- animate(p, renderer = ffmpeg_renderer(), nframes = 400, rewind = FALSE, duration = 40)
 
 
-anim_save(filename = "simulation-20iunie.mpg", animation = movie)
+anim_save(filename = "simulation-madrid.mpg", animation = movie)
 
 
 #read prob file
@@ -170,23 +177,24 @@ anim_save(filename = "simulation-network-prior-20iunie.mpg", animation = movie2)
 #######in lucru################
 ssteep = 0.2
 smid = -92.5
-power = 10
-gamma = 3.87
+power = 5
+gamma = 3.55
 distance = sqrt((4000-3500) ^ 2 + (7000-9500) ^ 2)
 S0 = 30 + 10 * log10(power)
 Sd = 10 * gamma * log10(distance)
 S = S0 - Sd
 result = 1.0 / (1 + exp(-ssteep * (S - smid)))
-
+Smin=-80
+rmax = power^(1/gamma) * 10^( (3 - (Smin/10))/ gamma)
 
 street1 <- read.csv("street1.csv",stringsAsFactors = FALSE, header = FALSE)
 street2 <- read.csv("street2.csv",stringsAsFactors = FALSE, header = FALSE)
 person_move <- read.csv("person_move.csv",stringsAsFactors = FALSE, header = FALSE)
 
-p<-ggplot() + geom_path(aes(x = street1$V1, y = street1$V2))
-p <- p + geom_path(aes(x = street2$V1, y = street2$V2))
+p<-ggplot() + geom_path(aes(x = street1$V1, y = street1$V2), color = "red")
+p <- p + geom_path(aes(x = street2$V1, y = street2$V2), color = "blue")
 p <- p + geom_point(data = person_move,aes(x = person_move[, 2], y = person_move[, 3]))
 p <- p + transition_states(person_move[, 1], transition_length = 1, state_length = 1) + shadow_wake(wake_length = 0.025, alpha = FALSE)
 options(gganimate.dev_args = list(width = 600, height = 600))
-movie2 <- animate( p, nframes = 700, renderer = ffmpeg_renderer(), rewind = FALSE, duration = 40)
+movie2 <- animate( p, nframes = 1600, renderer = ffmpeg_renderer(), rewind = FALSE, duration = 40)
 
